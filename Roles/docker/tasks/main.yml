@@ -1,0 +1,41 @@
+---
+
+- name: install required packages
+  ansible.builtin.apt: 
+    name: "{{ item }}"
+  with_items:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+
+- name: add gpg key
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+- name: add docker repository into sources list
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+    state: present
+
+- name: install docker-ce
+  ansible.builtin.apt: 
+    name: docker-ce
+    update_cache: yes
+
+- name: add user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+
+- name: download docker-compose
+  shell: curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+- name: apply executable permissions to the binary
+  ansible.builtin.file:
+    path: /usr/local/bin/docker-compose
+    mode: ugo+x
+
+- name: install loki docker driver
+  command:
+    cmd: docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions

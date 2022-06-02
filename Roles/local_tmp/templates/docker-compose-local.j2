@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  node:
+    image: nodeml/dev:latest
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job={{ item.1.name }}-node
+    volumes:
+    - '{{ item.0 }}Main.cake:/root/node/node-ml/Main.cake'
+    - '{{ item.0 }}testnet:/root/node/node-ml/testnet'
+    - '{{ item.0 }}pipes:/root/node/node-ml/pipes'
+    - '{{ item.0 }}node.log:/root/node/node-ml/node.log'
+    - '{{ item.0 }}GenesisGenerator:/root/node/node-ml/innochain-cli/innochain-cli'
+    tty: true
+    expose:
+      - "8080"
+    networks:
+      node-network:
+        ipv4_address: {{ item.1.ip[0] }}
+    entrypoint: ./Main.cake --fgenesis=testnet/genesis --fkeypair=testnet/{{ item.1.keypair }} --fnodesinfo=testnet/nodes --max-block-size=10 --apiin=pipes/apiin --apiout=pipes/apiout --broadcast=pipes/broadcast --init-delay=2.5 --base-exp=1.5 --logger-level=Debug --stdout-log --sync-commits-size=150 --sync-blocks-size=200
+
+  api:
+    image: nodeml/api:latest
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job={{ item.1.name }}-api
+    volumes:
+    - '{{ item.0 }}pipes:/root/node/pipes'
+    - '{{ item.0 }}api-settings.py:/root/node/node-ml-api/api/settings.py'
+    - '{{ item.0 }}node-ml-api:/root/node/node-ml-api'
+    - '{{ item.0 }}pipe-settings.py:/root/node/node-ml-api/proxy_server/settings.py'
+    tty: true
+    ports:
+      - "{{ item.1.port }}:8000"
+    command: python manage.py migrate
+    networks:
+      node-network:
+        ipv4_address: {{ item.1.ip[1] }}
+
+  redis:
+    image: redis:5
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job={{ item.1.name }}-redis
+    tty: true
+    expose:
+      - "6379"
+    networks:
+      node-network:
+        ipv4_address: {{ item.1.ip[2] }}
+
+networks:
+  node-network:
+    name: node-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.1.0.0/16
+          ip_range: 10.1.10.0/24

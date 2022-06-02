@@ -1,0 +1,28 @@
+services:
+  loki:
+    image: grafana/loki:2.3.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - {{ temp_path[0] }}local-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - node-network
+      - loki-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - {{ temp_path[0] }}grafana.ini:/etc/grafana/grafana.ini
+    networks:
+      - loki-network
+
+networks:
+  node-network:
+    external: true
+    name: node-network
+  loki-network:
+    name: loki-network
+    driver: bridge

@@ -3,6 +3,7 @@
   ansible.builtin.apt: 
     name: "{{ item }}"
   with_items:
+  - openssl
   - liblz4-dev
   - libbz2-dev
   - zlib1g-dev

@@ -1,0 +1,26 @@
+---
+- hosts: control_node
+  roles:
+    - predeploy
+    - docker
+
+  tasks:
+
+    - name: check that the temp exists
+      stat:
+        path: "{{ temp_path[3] }}"
+        get_attributes: no
+        get_checksum: no
+        get_mime: no
+      register: check_temp
+
+    - name: Create temp directory
+      include_roles:
+        name: create_temp
+      when: not check_temp.stat.exists or mode == "local_debug" or mode == "local_debug_api"
+    
+    - nmae: Control dockers node
+      include_roles:
+        name: control_node
+
+      

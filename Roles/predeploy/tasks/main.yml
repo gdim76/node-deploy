@@ -1,7 +1,4 @@
 ---
-
-
-
 - name: Download cake-x64-64
   get_url: 
     url: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
