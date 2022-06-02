@@ -1,0 +1,16 @@
+[Unit]
+  Description=Service for the innochain blockchain node
+ 
+[Service]
+  WorkingDirectory=/home/{{ ansible_user_id }}/node/node-ml/
+  ExecStart=/home/{{ ansible_user_id }}/node/node-ml/./Main.cake --fgenesis=/home/{{ ansible_user_id }}/node/testnet/genesis --fkeypair=/home/{{ ansible_user_id }}/node/testnet/{{ keypair }} --fnodesinfo=/home/{{ ansible_user_id }}/node/testnet/nodes --max-block-size=10 --apiin=/home/{{ ansible_user_id }}/node/node-ml/apiin --apiout=/home/{{ ansible_user_id }}/node/node-ml/apiout --broadcast=/home/{{ ansible_user_id }}/node/node-ml/broadcast --init-delay=2.5 --base-exp=1.5 --logger-level=Debug --sync-commits-size=150 --sync-blocks-size=200
+  Type=idle
+  KillMode=process
+ 
+  SyslogIdentifier=smart-test
+  SyslogFacility=daemon
+ 
+  Restart=on-failure
+ 
+[Install]
+  WantedBy=multiuser.target

@@ -1,0 +1,64 @@
+---
+
+
+
+- name: Download cake-x64-64
+  get_url: 
+    url: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    dest: /home/{{ ansible_user_id }}/
+
+- name: 
+  ansible.builtin.unarchive:
+  src: /home/{{ ansible_user_id }}/cake-x64-64.tar.gz
+
+- name: Build cake-x64-64
+  make:
+    chdir: /home/{{ ansible_user_id }}/cake-x64-64
+
+- name: check that the node exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/node/"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_node
+
+- name: Create node directory
+  file: path=/home/{{ ansible_user_id }}/node/  state=directory
+  when: not check_node.stat.exists
+
+- name: check that the node-ml exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/node/node-ml"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_node-ml
+
+- name: Create node-ml directory
+  file: path=/home/{{ ansible_user_id }}/node/node-ml/  state=directory
+  when: not check_node-ml.stat.exists
+
+- name: clone node-ml
+  ansible.builtin.git:
+    repo: 'https://gitlab.com/InnoChain/node-ml.git'
+    dest: /home/{{ ansible_user_id }}/node/node-ml
+  when: not check_node-ml.stat.exists
+
+- name: check that the node-ml-api exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/node/node-ml-api"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_node-ml-api
+
+- name: Create node-ml-api directory
+  file: path=/home/{{ ansible_user_id }}/node/node-ml-api/  state=directory
+  when: not check_node-ml-api.stat.exists
+  
+- name: clone node-ml-api
+  ansible.builtin.git:
+    repo: 'https://gitlab.com/RIRussel/node-ml-api.git'
+    dest: /home/{{ ansible_user_id }}/node/node-ml-api
+  when: not check_node-ml-api.stat.exists

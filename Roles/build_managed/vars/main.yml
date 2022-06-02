@@ -1,0 +1,6 @@
+---
+clean_db: false
+pipes:
+- apiin
+- apiout
+- broadcast

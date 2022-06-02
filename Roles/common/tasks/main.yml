@@ -1,0 +1,26 @@
+---
+- name: install prerequirements 
+  ansible.builtin.apt: 
+    name: "{{ item }}"
+  with_items:
+  - liblz4-dev
+  - libbz2-dev
+  - zlib1g-dev
+  - libsnappy-dev
+  - libjemalloc-dev
+  - libzstd-dev
+  - virtualenv
+  - make
+  - build-essential
+  - libssl-dev
+  - pkg-config
+  - git
+  - python3-pip
+  - snapd
+
+- name: install cmake 3.18
+  snap:
+    name: cmake
+    classic: yes
+  
+  include_tasks: tasks/gosts.yml

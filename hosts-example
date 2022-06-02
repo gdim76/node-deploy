@@ -1,0 +1,10 @@
+
+[managed_nodes]
+192.168.0.100 ansible_user=user1 ansible_become_pass=paasfrase1 keypair=keypair0
+192.168.0.101 ansible_user=user2 ansible_become_pass=paasfrase2 keypair=keypair1
+192.168.0.102 ansible_user=user3 ansible_become_pass=paasfrase3 keypair=keypair2
+192.168.0.103 ansible_user=user4 ansible_become_pass=paasfrase4 keypair=keypair3
+
+# The keypair variable is optional, but if you want to deploy a blockchain node to a controlling machine, you need to provide this variable. 
+[control_node]
+localhost ansible_user=user0 ansible_connection=local ansible_become_pass=paasfrase0 keypair=keypair4
