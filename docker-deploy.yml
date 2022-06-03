@@ -1,66 +1,43 @@
 ---
+- hosts: control_node
+  gather_facts: no
+  roles:
+    - predeploy
+    - common
+    - build_control_docker
+        
+- hosts: managed_nodes
+  vars:
+    mode: "up"
+    pipes:
+    - apiin
+    - apiout
+    - broadcast
 
-  
-  - hosts: control_node
-    gather_facts: no
-    roles:
-      - predeploy
+  tasks:
+  - name: check that the docker and docker-compose exists
+    stat:
+      path: "{{ item }}"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    with_items:
+      - /usr/bin/docker
+      - /usr/local/bin/docker-compose
+    register: check_docker
 
-    tasks:
+  - name: Install docker on hosts 
+      include_roles: 
+        name: docker
+      when: not (check_docker.results[0].stat.exists and check_docker.results[1].stat.exists)
+ 
+  roles:
+     - build_managed_docker
+   
+- hosts: managed_nodes
+  tasks: 
 
-    - setup:
-        filter: ansible_user*
-
-    - name: build node
-      command: 
-        cmd: make
-        chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/" 
-
-    - name: create node_info directory
-      file: path={{ hostvars.localhost.ansible_facts.user_dir }}/node/node_info/ state=directory 
-
-    - name: build GenesisGenerator
-      command: 
-        cmd: make
-        chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/genesis-generator/"
-
-    - name: generate node_info
-      command: 
-        cmd: ./GenesisGenerator -o={{ hostvars.localhost.ansible_facts.user_dir }}/node/node_info/ -i={{ groups.managed_nodes[0] }}:8080,{{ groups.managed_nodes[1] }}:8080,{{ groups.managed_nodes[2] }}:8080,{{ groups.managed_nodes[3] }}:8080 -m
-        chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/genesis-generator/"
-
-  - hosts: managed_nodes
-    vars:
-      mode: "up"
-      pipes:
-      - apiin
-      - apiout
-      - broadcast
-
-    tasks:
-    - name: check that the docker and docker-compose exists
-      stat:
-        path: "{{ item }}"
-        get_attributes: no
-        get_checksum: no
-        get_mime: no
-      with_items:
-        - /usr/bin/docker
-        - /usr/local/bin/docker-compose
-      register: check_docker
-
-    - name: Install docker on hosts 
-        include_roles: 
-          name: docker
-        when: not (check_docker.results[0].stat.exists and check_docker.results[1].stat.exists)
-
-      
-    roles:
-       - build_managed_docker
-    
-    tasks: 
-    
-    - name: Control docker containers
-        include_roles: 
-          name: control_docker_containers
+  - name: Control docker containers
+      include_roles: 
+        name: control_docker_containers
       

@@ -1,0 +1,23 @@
+---
+# Build control node for nodes with dockers containers 
+
+- setup:
+    filter: ansible_user*
+
+- name: build node
+  command: 
+    cmd: make
+    chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/" 
+
+- name: create node_info directory
+  file: path={{ hostvars.localhost.ansible_facts.user_dir }}/node/node_info/ state=directory 
+
+- name: build GenesisGenerator
+  command: 
+    cmd: make
+    chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/genesis-generator/"
+
+- name: generate node_info
+  command: 
+    cmd: ./GenesisGenerator -o={{ hostvars.localhost.ansible_facts.user_dir }}/node/node_info/ -i={{ groups.managed_nodes[0] }}:8080,{{ groups.managed_nodes[1] }}:8080,{{ groups.managed_nodes[2] }}:8080,{{ groups.managed_nodes[3] }}:8080 -m
+    chdir: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/genesis-generator/"

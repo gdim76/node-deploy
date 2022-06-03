@@ -23,5 +23,3 @@
   snap:
     name: cmake
     classic: yes
-  
-  include_tasks: tasks/gosts.yml

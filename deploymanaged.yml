@@ -8,6 +8,7 @@
   become: yes
   roles:
      - common
+     - gosts
 
 - hosts: control_node
   tasks:
