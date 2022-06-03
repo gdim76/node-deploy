@@ -21,6 +21,6 @@
     
     - nmae: Control dockers node
       include_roles:
-        name: control_node
+        name: control_docker
 
       
