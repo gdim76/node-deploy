@@ -1,0 +1,30 @@
+---
+- name: build node
+  command: 
+    cmd: make
+    chdir: "/home/{{ ansible_user_id }}/node/node-ml/" 
+
+- name: build GenesisGenerator
+  command: 
+    cmd: make
+    chdir: "/home/{{ ansible_user_id }}/node/node-ml/genesis-generator/"
+
+- name: template api-pipe-settings
+  ansible.builtin.template:
+    src: "./templates/api-pipe-settings-docker.j2"
+    dest: "/home/{{ ansible_user_id }}/node/pipe-settings.py"
+
+- name: template api-settings
+  ansible.builtin.template:
+    src: "./templates/api-settings.j2"
+    dest: "/home/{{ ansible_user_id }}/node/api-settings.py"
+
+- name: create node image
+  command: 
+    cmd: "docker build -t {{ node_name }}:{{ tag }} -f ./Dockerfile-node-prod ./../"
+  when: mode != "api"
+
+- name: create api image
+  command: 
+    cmd: "docker build -t {{ api_name }}:{{ tag }} -f ./Dockerfile-api-prod ./../"
+  when: mode != "node"
