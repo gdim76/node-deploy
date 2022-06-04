@@ -1,0 +1,36 @@
+---
+- name: create remote path
+  file: path=/home/{{ ansible_user_id }}/node/node-ml/ state=directory 
+
+- name: check that the pipes exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/node/node-ml/{{ item }}"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  with_items: "{{ pipes }}"
+  register: check_pipes
+
+- name: create pipes
+  command: 
+    cmd: mkfifo "{{ item.item }}"
+    chdir: /home/{{ ansible_user_id }}/node/node-ml/
+  with_items: "{{ check_pipes.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: not item.stat.exists
+
+- name: template docker-compose-single
+  ansible.builtin.template:
+    src: "./templates/docker-compose-single.j2"
+    dest: "/home/{{ ansible_user_id }}/node/docker-compose.yml"
+
+- name: template loki-config.j2
+  ansible.builtin.template:
+    src: "./templates/loki-config.j2"
+    dest: "/home/{{ ansible_user_id }}/node/local-config.yaml"
+
+- name: template grafana.j2
+  ansible.builtin.template:
+    src: "./templates/grafana.j2"
+    dest: "/home/{{ ansible_user_id }}/node/grafana.ini"

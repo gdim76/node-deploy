@@ -1,0 +1,73 @@
+version: "3.9"
+services:
+  node:
+    image: {{ node_image }}
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job=node
+    volumes:
+    - '/home/{{ ansible_user_id }}/node/node-ml/apiin:/root/node/node-ml/apiin'
+    - '/home/{{ ansible_user_id }}/node/node-ml/apiout:/root/node/node-ml/apiout'
+    - '/home/{{ ansible_user_id }}/node/node-ml/broadcast:/root/node/node-ml/broadcast'
+    tty: true
+    network_mode: "host" 
+
+  api:
+    image: {{ api_image }}
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job=api
+    volumes:
+    - '/home/{{ ansible_user_id }}/node/node-ml/apiin:/root/node/node-ml/apiin'
+    - '/home/{{ ansible_user_id }}/node/node-ml/apiout:/root/node/node-ml/apiout'
+    - '/home/{{ ansible_user_id }}/node/node-ml/broadcast:/root/node/node-ml/broadcast'
+    tty: true
+    ports:
+      - "8000:8000"
+    command: python manage.py migrate
+    networks:
+      - node-network
+
+  redis:
+    image: redis:5
+    logging: 
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-max-backoff: 5s
+        loki-external-labels: job=redis
+    tty: true
+    ports:
+      - "6379:6379"
+    networks:
+      - node-network
+
+  loki:
+    image: grafana/loki:2.3.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - '/home/{{ ansible_user_id }}/node/local-config.yaml:/etc/loki/local-config.yaml'
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - node-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - '/home/{{ ansible_user_id }}/node/grafana.ini:/etc/grafana/grafana.ini'
+    networks:
+      - node-network
+
+networks:
+  node-network:
+    name: node-network
+    driver: bridge

@@ -1,0 +1,8 @@
+---
+node_image: "node:latest"
+api_image: "api:latest"
+mode: "up"
+pipes:
+- apiin
+- apiout
+- broadcast

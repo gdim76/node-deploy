@@ -1,0 +1,6 @@
+- hosts: control_node
+  become: yes
+  roles:
+    - docker
+    - build_control_single_docker
+    - control-single-node
