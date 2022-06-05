@@ -7,9 +7,10 @@
 - name: Unarchive cake
   unarchive:
     src: /home/{{ ansible_user_id }}/cake-x64-64.tar.gz
+    dest: /home/{{ ansible_user_id }}/
 
 - name: Build cake-x64-64
-  make:
+  community.general.make:
     chdir: /home/{{ ansible_user_id }}/cake-x64-64
 
 - name: check that the node exists
@@ -32,19 +33,19 @@
     get_attributes: no
     get_checksum: no
     get_mime: no
-  register: check_node-ml
+  register: check_node_ml
 
 - name: Create node-ml directory
   file:
     path: '/home/{{ ansible_user_id }}/node/node-ml/'
     state: directory
-  when: not check_node-ml.stat.exists
+  when: not check_node_ml.stat.exists
 
 - name: clone node-ml
   git:
     repo: 'https://gitlab.com/InnoChain/node-ml.git'
     dest: /home/{{ ansible_user_id }}/node/node-ml
-  when: not check_node-ml.stat.exists
+  when: not check_node_ml.stat.exists
 
 - name: check that the node-ml-api exists
   stat:
@@ -52,16 +53,16 @@
     get_attributes: no
     get_checksum: no
     get_mime: no
-  register: check_node-ml-api
+  register: check_node_ml_api
 
 - name: Create node-ml-api directory
   file:
     path: '/home/{{ ansible_user_id }}/node/node-ml-api/'
     state: directory
-  when: not check_node-ml-api.stat.exists
+  when: not check_node_ml_api.stat.exists
   
 - name: clone node-ml-api
   git:
     repo: 'https://gitlab.com/RIRussel/node-ml-api.git'
     dest: /home/{{ ansible_user_id }}/node/node-ml-api
-  when: not check_node-ml-api.stat.exists
+  when: not check_node_ml_api.stat.exists

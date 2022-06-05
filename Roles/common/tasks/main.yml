@@ -1,6 +1,6 @@
 ---
 - name: install prerequirements 
-  ansible.builtin.apt: 
+  apt: 
     name: "{{ item }}"
   with_items:
   - openssl
@@ -20,6 +20,6 @@
   - snapd
 
 - name: install cmake 3.18
-  snap:
+  community.general.snap:
     name: cmake
     classic: yes

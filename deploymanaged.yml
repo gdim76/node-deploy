@@ -1,9 +1,4 @@
 ---
-- hosts: control_node
-  become: yes
-  roles: 
-    - predeploy
-
 - hosts: all
   become: yes
   roles:
@@ -11,11 +6,14 @@
      - gosts
 
 - hosts: control_node
+  become: yes
+  roles: 
+    - predeploy
+
   tasks:
   - name: build control node
     make: 
      chdir: /home/{{ control_user }}/node/node-ml/ 
-
 
 - hosts: managed_nodes
   become: yes
