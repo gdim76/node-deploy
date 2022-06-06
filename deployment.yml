@@ -1,5 +1,9 @@
 ---
    
+- hosts: control_mnode
+  roles:
+    - predeploy
+
 - hosts: all
   roles:
     - common
@@ -13,8 +17,7 @@
   - setup:
       filter: ansible_user*     
   roles:
-    - predeploy
-    - build_control_node
+       - build_control_node
   environment:
     SSL_CERT_DIR: /etc/ssl/certs
      
