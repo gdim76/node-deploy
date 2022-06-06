@@ -1,9 +1,8 @@
 ---
 - name: install prerequirements 
-  apt: 
+  ansible.builtin.apt: 
     name: "{{ item }}"
   with_items:
-  - openssl
   - liblz4-dev
   - libbz2-dev
   - zlib1g-dev
@@ -18,8 +17,102 @@
   - git
   - python3-pip
   - snapd
+  become: yes
 
 - name: install cmake 3.18
-  community.general.snap:
+  snap:
     name: cmake
     classic: yes
+  become: yes
+
+- name: removing openssl symbolic link
+  file: 
+    path: /usr/local/bin/openssl
+    state: absent
+  become: yes
+
+- name: create node directory
+  file: 
+    path: /home/{{ ansible_user_id }}/node/
+    state: directory 
+
+- name: download openssl
+  ansible.builtin.unarchive:
+    src: https://www.openssl.org/source/openssl-1.1.1g.tar.gz
+    dest: /home/{{ ansible_user_id }}/node/
+    creates: /home/{{ ansible_user_id }}/node/openssl-1.1.1g
+    remote_src: yes
+    mode: ugo+rw
+
+- name: download fix
+  ansible.builtin.git:
+    repo: https://github.com/openssl/openssl.git
+    dest: /home/{{ ansible_user_id }}/node/temp
+    version: b7ce611887cfac633aacc052b2e71a7f195418b8
+
+- name: copy certs directory
+  copy: 
+    src: /home/{{ ansible_user_id }}/node/temp/test/certs/
+    dest: /home/{{ ansible_user_id }}/node/openssl-1.1.1g/test/certs/
+
+- name: copy ct_test.c
+  copy: 
+    src: /home/{{ ansible_user_id }}/node/temp/test/ct_test.c
+    dest: /home/{{ ansible_user_id }}/node/openssl-1.1.1g/test/ct_test.c
+
+- name: delete temp directory
+  file:
+    state: absent
+    path: /home/{{ ansible_user_id }}/node/temp/
+
+- name: config openssl
+  command: 
+    cmd: ./config
+    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+
+- name: build openssl
+  command: 
+    cmd: make
+    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+
+- name: test openssl
+  command: 
+    cmd: make test
+    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+
+- name: install openssl
+  command: 
+    cmd: make install
+    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+  become: yes
+
+- name: update symlinks and rebuild the library cache
+  command: 
+    cmd: ldconfig
+    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+  become: yes
+
+- name: update certificates
+  command: 
+    cmd: update-ca-certificates --fresh
+  become: yes 
+
+- name: export certificates directory
+  command: 
+    cmd: sh -c 'echo "export SSL_CERT_DIR=/etc/ssl/certs" > /etc/profile.d/ssl_cert_dir.sh'
+  become: yes
+
+- name: check that the build exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_build
+
+- name: delete old engine
+  file: 
+    path: "/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine" 
+    state: absent
+  when: not check_build.stat.exists
+

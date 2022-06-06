@@ -1,10 +1,7 @@
 ---
-- name: create remote path
-  file: path=/home/{{ ansible_user_id }}/node/node-ml/test-node/ state=directory 
-
 - name: transfer files
   copy:
-    src: "/home/{{ control_user }}/node/node-ml/Main.cake"
+    src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/Main.cake"
     dest: "/home/{{ ansible_user_id }}/node/node-ml/Main.cake"
     mode: ug+x
         
@@ -32,15 +29,7 @@
     mode: ugo+rw
     force: yes
   with_items: "{{ pipes }}"
-
-- name: copy params
-  copy: 
-    src: "/home/{{ control_user }}/node/node-ml/test-node/{{ item }}"
-    dest: "/home/{{ ansible_user_id }}/node/node-ml/test-node/"
-  with_items:
-  - genesis
-  - keypair
-  - nodes
+  become: yes
 
 - name: check that the node-ml-api exists
   stat:
@@ -52,7 +41,7 @@
 
 - name: copy api
   copy: 
-    src: "/home/{{ control_user }}/node/node-ml-api"
+    src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml-api"
     dest: "/home/{{ ansible_user_id }}/node/"
     mode: preserve
     directory_mode: ug+rw
@@ -65,12 +54,13 @@
 
 - name: template api-settings
   ansible.builtin.template:
-    src: api-pipe-settings.j2
+    src: ./templates/api-pipe-settings.j2
     dest: /home/{{ ansible_user_id }}/node/node-ml-api/proxy_server/settings.py
+  become: yes
 
 - name: copy testnet
   copy: 
-    src: "/home/{{ control_user }}/node/testnet"
+    src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/testnet"
     dest: "/home/{{ ansible_user_id }}/node/"
 
 - name: clean db
@@ -78,14 +68,28 @@
     state: absent
     path: "/home/{{ ansible_user_id }}/node/node-ml/storage/dbstore/"
   ignore_errors: yes
+  become: yes
   when: clean_db |bool
+  tags:
+  - restart
+  - rebuild
 
 - name: create dbstore
   file: path=/home/{{ ansible_user_id }}/node/node-ml/storage/dbstore/ state=directory 
 
 - name: template ml-innochain.service
   ansible.builtin.template:
-    src: ml-innochain-service.j2
+    src: ./templates/ml-innochain-service.j2
     dest: /lib/systemd/system/ml-innochain.service
-  notify:
-  - restart ml-innochain.service
+  become: yes
+
+- name: restart ml-innochain.service
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: yes
+    no_block: yes
+    name: ml-innochain.service
+  become: yes
+  tags:
+  - restart
+  - rebuild

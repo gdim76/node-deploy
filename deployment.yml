@@ -1,0 +1,26 @@
+---
+   
+- hosts: all
+  roles:
+    - common
+    - gosts
+  environment:
+    SSL_CERT_DIR: /etc/ssl/certs
+
+- hosts: control_node
+  gather_facts: no
+  tasks:
+  - setup:
+      filter: ansible_user*     
+  roles:
+    - predeploy
+    - build_control_node
+  environment:
+    SSL_CERT_DIR: /etc/ssl/certs
+     
+- hosts: managed_nodes
+  roles:
+    - build_managed_nodes
+
+    
+      
