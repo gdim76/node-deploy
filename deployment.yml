@@ -20,7 +20,7 @@
      
 - hosts: managed_nodes
   roles:
-    - build_managed_nodes
+    - build_managed
 
     
       

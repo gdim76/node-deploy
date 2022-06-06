@@ -1,9 +1,5 @@
 ---
 
-  gather_facts: no
-- setup:
-    filter: ansible_user*
-        
 - name: generate ssh key
       command: ssh-keygen -t rsa -f "$HOME/.ssh/id_rsa" -P ""
 
