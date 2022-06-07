@@ -1,0 +1,74 @@
+---
+- hosts: control_node
+  vars:
+      ip_nodes:
+      - 192.168.2.3
+
+  tasks:
+  
+  - name: generate ssh key
+    command: ssh-keygen -t rsa -b 4096 -f "$HOME/.ssh/id_rsa" -P ""
+
+  - name: ssh-copy-id
+    command: ssh-copy-id -i /root/.ssh/id_rsa.pub -o StrictHostKeyChecking=no root@"{{ item }}"
+    become: yes
+    with_items: "{{ ip_nodes }}"
+    tags: ssh_copy
+
+- hosts: all 
+
+  tasks:
+
+  - name: check that the node exists
+    stat:
+      path: "/home/{{ ansible_user_id }}/node/"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    register: check_node
+
+  - name: Create node directory
+    file:
+      path: '/home/{{ ansible_user_id }}/node/'
+      state: directory
+    when: not check_node.stat.exists
+
+  - name: check that the node-ml exists
+    stat:
+      path: "/home/{{ ansible_user_id }}/node/node-ml"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    register: check_node_ml
+
+  - name: Create node-ml directory
+    file:
+      path: '/home/{{ ansible_user_id }}/node/node-ml/'
+      state: directory
+    when: not check_node_ml.stat.exists
+
+  - name: clone node-ml
+    git:
+      repo: 'https://gitlab.com/InnoChain/node-ml.git'
+      dest: /home/{{ ansible_user_id }}/node/node-ml
+    when: not check_node_ml.stat.exists
+
+  - name: check that the node-ml-api exists
+    stat:
+      path: "/home/{{ ansible_user_id }}/node/node-ml-api"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    register: check_node_ml_api
+
+  - name: Create node-ml-api directory
+    file:
+      path: '/home/{{ ansible_user_id }}/node/node-ml-api/'
+      state: directory
+    when: not check_node_ml_api.stat.exists
+  
+  - name: clone node-ml-api
+    git:
+      repo: 'https://gitlab.com/RIRussel/node-ml-api.git'
+      dest: /home/{{ ansible_user_id }}/node/node-ml-api
+    when: not check_node_ml_api.stat.exists
