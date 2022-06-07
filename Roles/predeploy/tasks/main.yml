@@ -1,13 +1,5 @@
 ---
 
-#- name: generate ssh key
-#      command: ssh-keygen -t rsa -f "$HOME/.ssh/id_rsa -P"
-
-#- name: ssh-copy-id
-#  command: "sshpass -p {{ hostvars[item]['ansible_become_pass'] }} ssh-copy-id -i /home/{{ ansible_user_id }}/.ssh/id_rsa.pub -o StrictHostKeyChecking=no {{ hostvars[item]['ansible_user'] }}@{{ item }}"
-#  with_items:
-#    - "{{ groups['managed_nodes'] }}"
-
 - name: check that the node exists
   stat:
     path: "/home/{{ ansible_user_id }}/node/"
