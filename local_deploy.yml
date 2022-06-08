@@ -32,12 +32,12 @@
       register: check_temp
 
     - name: Create temp directory
-      include_roles:
+      include_role:
         name: local_temp
       when: not check_temp.stat.exists or mode == "local_debug" or mode == "local_debug_api"
     
     - name: Control dockers node
-      include_roles:
+      include_role:
         name: control_docker
 
       
