@@ -9,7 +9,7 @@
 
 - name: download CakeML
   ansible.builtin.unarchive:
-    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz   # компилится последняя версии 1804  1370 1399 выдают ошибку на Ubuntu 20
     dest: /home/{{ ansible_user_id }}/
     creates: /home/{{ ansible_user_id }}/cake-x64-64
     remote_src: yes

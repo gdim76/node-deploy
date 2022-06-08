@@ -31,7 +31,7 @@
     state: absent
   become: yes
 
-- name: create node directory
+- name: create node directory    #  она уже создана на шаге 2 клонирования repo из git
   file: 
     path: /home/{{ ansible_user_id }}/node/
     state: directory 

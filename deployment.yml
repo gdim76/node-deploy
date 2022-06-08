@@ -22,6 +22,10 @@
     - gosts
   environment:
     SSL_CERT_DIR: /etc/ssl/certs
+  tags: 
+  - install_nodes
+      
+ 
 
 - hosts: control_node
   gather_facts: no
@@ -31,11 +35,17 @@
   roles:
        - build_control_node
   environment:
-    SSL_CERT_DIR: /etc/ssl/certs
-     
+      SSL_CERT_DIR: /etc/ssl/certs
+  tags:
+  - build_control
+
+
+
 - hosts: managed_nodes
   roles:
     - build_managed
+  tags:
+  - build_managed
 
     
       
