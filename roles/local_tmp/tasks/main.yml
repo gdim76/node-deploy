@@ -1,0 +1,183 @@
+---
+- name: create temp directories
+  file: 
+    path: "{{ item }}" 
+    state: directory
+  with_items: "{{ temp_path }}"
+
+- name: delete old node.log files
+  file: 
+    path: "{{ item }}node.log" 
+    state: absent
+  with_items: "{{ temp_path }}"
+  ignore_errors: yes
+  tags:
+  - reload_api
+
+- name: create node.log files
+  file: 
+    path: "{{ item }}node.log" 
+    state: touch
+    mode: ugo+rw
+  with_items: "{{ temp_path }}"
+  tags:
+  - reload_api
+
+- name: check that the api exists
+  stat:
+    path: "{{ item }}node-ml-api"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  with_items: "{{ temp_path }}"
+  register: check_api
+
+- name: copy api
+  copy: 
+    src: "/home/{{ ansible_user_id }}/node/node-ml-api"
+    dest: "{{ item }}"
+    mode: preserve
+    directory_mode: ug+rw
+  with_items: "{{ temp_path }}"
+  loop_control:
+    index_var: index
+  tags:
+  - reload_api
+
+- name: check that the CakeML exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/cake-x64-64/cake"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_cake
+
+- name: download CakeML
+  ansible.builtin.unarchive:
+    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    dest: /home/{{ ansible_user_id }}/
+    creates: /home/{{ ansible_user_id }}/cake-x64-64
+    remote_src: yes
+    mode: ugo+rw
+  when: not check_cake.stat.exists
+
+- name: build CakeML
+  command: 
+    cmd: make
+    chdir: "/home/{{ ansible_user_id }}/cake-x64-64"
+  when: not check_cake.stat.exists
+
+- name: build node
+  command: 
+    cmd: make
+    chdir: "{{ node_path }}"
+  tags:
+  - rebuild
+
+- name: build GenesisGenerator
+  command: 
+    cmd: make
+    chdir: "{{ node_path }}genesis-generator/"
+  tags:
+  - rebuild
+
+- name: create testnet directory
+  file: path=/home/{{ ansible_user_id }}/node/testnet state=directory 
+
+- set_fact:
+    node_set: "{{ node_set | default('') + item.ip[0] + ':8080,' }}"
+  with_items:
+    - "{{ nodes }}"
+
+- name: generate testnet
+  command: 
+    cmd: "./GenesisGenerator -o=/home/{{ ansible_user_id }}/node/testnet -i={{ node_set[:-1] }} -m"
+    chdir: "{{ node_path }}genesis-generator/"
+
+- name: copy testnet
+  copy: 
+    src: "/home/{{ ansible_user_id }}/node/testnet"
+    dest: "{{ item }}"
+  with_items: "{{ temp_path }}"
+
+- name: copy GenesisGenerator
+  copy: 
+    src: "{{ node_path }}genesis-generator/GenesisGenerator"
+    dest: "{{ item }}"
+    mode: preserve
+  with_items: "{{ temp_path }}"
+  tags:
+  - rebuild
+
+- name: copy node
+  copy: 
+    src: "{{ node_path }}Main.cake"
+    dest: "{{ item }}"
+    mode: preserve
+  with_items: "{{ temp_path }}"
+  tags:
+  - rebuild
+
+- name: create pipes directory
+  file: path={{ item }}pipes state=directory 
+  with_items: "{{ temp_path }}"
+
+- name: check that the pipes exists
+  stat:
+    path: "{{ item.1 }}pipes/{{ item.0 }}"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  loop: "{{ pipes|product(temp_path)|list }}"
+  register: check_pipes
+
+- name: create pipes
+  command: 
+    cmd: mkfifo "{{ item.item[0] }}"
+    chdir: "{{ item.item[1] }}pipes"
+  with_items: "{{ check_pipes.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: not item.stat.exists
+  become: yes
+  
+- name: apply reade and write permissions
+  ansible.builtin.file:
+    path: "{{ item.0 }}pipes/{{ item.1 }}"
+    mode: ugo+rw
+    force: yes
+  loop: "{{ temp_path|product(pipes)|list }}"
+  become: yes
+
+- name: template api-pipe-settings
+  ansible.builtin.template:
+    src: "./templates/api-pipe-settings-docker.j2"
+    dest: "{{ item }}/pipe-settings.py"
+  with_items: "{{ temp_path }}"
+
+- name: template api-settings
+  ansible.builtin.template:
+    src: "./templates/api-settings.j2"
+    dest: "{{ item.0 }}/api-settings.py"
+  loop: "{{ temp_path|zip(nodes)|list }}"
+
+- name: template docker-compose-local
+  ansible.builtin.template:
+    src: "./templates/docker-compose-local.j2"
+    dest: "{{ item.0 }}/docker-compose.yml"
+  loop: "{{ temp_path|zip(nodes)|list }}"
+
+- name: template loki-config.j2
+  ansible.builtin.template:
+    src: "./templates/loki-config.j2"
+    dest: "{{ temp_path[0] }}/local-config.yaml"
+
+- name: template docker-compose-loki.j2
+  ansible.builtin.template:
+    src: "./templates/docker-compose-loki.j2"
+    dest: "{{ temp_path[0] }}/docker-compose-loki.yml"
+
+- name: template grafana.j2
+  ansible.builtin.template:
+    src: "./templates/grafana.j2"
+    dest: "{{ temp_path[0] }}/grafana.ini"

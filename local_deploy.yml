@@ -1,8 +1,25 @@
 ---
 - hosts: control_node
+  vars:
+    nodes:
+      - { name: "node1", ip: [ 10.1.10.21, 10.1.10.25, 10.1.10.26], port: 8000, keypair: keypair0 }
+      - { name: "node2", ip: [ 10.1.10.22, 10.1.10.27, 10.1.10.28], port: 8001, keypair: keypair1 }
+      - { name: "node3", ip: [ 10.1.10.23, 10.1.10.29, 10.1.10.30], port: 8002, keypair: keypair2 }
+      - { name: "node4", ip: [ 10.1.10.24, 10.1.10.31, 10.1.10.32], port: 8003, keypair: keypair3 }
+    work_dir: "/home/{{ ansible_user_id }}/node-deploy/"
+    node_path: "/home/{{ ansible_user_id }}/node/node-ml/"
+    temp_path: [ "{{ work_dir }}temp1/", "{{ work_dir }}temp2/", "{{ work_dir }}temp3/", "{{ work_dir }}temp4/" ]
+    pipes: [ "apiin", "apiout", "broadcast" ]
+    mode: "local"
+  environment:
+    SSL_CERT_DIR: /etc/ssl/certs
+      
   roles:
     - predeploy
     - docker
+    - common
+  tags:
+    - initial_run
 
   tasks:
 
@@ -16,10 +33,10 @@
 
     - name: Create temp directory
       include_roles:
-        name: create_temp
+        name: local_temp
       when: not check_temp.stat.exists or mode == "local_debug" or mode == "local_debug_api"
     
-    - nmae: Control dockers node
+    - name: Control dockers node
       include_roles:
         name: control_docker
 

@@ -4,63 +4,83 @@
     cmd: docker-compose -p {{ item.1.name }} up -d 
     chdir: "{{ item.0 }}"
   loop: "{{ temp_path|zip(nodes)|list }}"
-  when: mode == "local_up" or mode == "local_debug" or mode == "local_debug_api"
-
+  become: yes
+  tags:
+  - up
+  - initial_run
+  - rebuild
+  - reload_api
 
 - name: up loki containers
   command:
     cmd: docker-compose -p loki -f docker-compose-loki.yml up -d
     chdir: "{{ temp_path[0] }}"
-  when: mode == "local_up" or mode == "local_debug" or mode == "local_debug_api"
-  
+  become: yes
+  tags:
+  - up
+  - initial_run
+  - rebuild
+  - reload_api
 
 - name: start loki containers
   command:
     cmd: docker-compose -p loki -f docker-compose-loki.yml start
     chdir: "{{ temp_path[0] }}"
-  when: mode == "local_start"
-  
+  become: yes
+  tags:
+  - start
+  - reload_api
 
 - name: start node containers
   command:
     cmd: docker-compose -p {{ item.1.name }} start
     chdir: "{{ item.0 }}"
   loop: "{{ temp_path|zip(nodes)|list }}"
-  when: mode == "local_start"
-  
+  become: yes
+  tags:
+  - start
 
 - name: stop loki containers
   command:
     cmd: docker-compose -p loki -f docker-compose-loki.yml stop
     chdir: "{{ temp_path[0] }}"
-  when: mode == "local_down" or mode == "local_stop"
-  
+  become: yes
+  tags:
+  - stop
+  - down
 
 - name: down loki containers
   command:
     cmd: docker-compose -p loki -f docker-compose-loki.yml down
     chdir: "{{ temp_path[0] }}"
-  when: mode == "local_down" 
-  
+  become: yes
+  tags:
+  - down
 
 - name: stop node containers
   command:
     cmd: docker-compose -p {{ item.1.name }} stop
     chdir: "{{ item.0 }}"
   loop: "{{ temp_path|zip(nodes)|list }}"
-  when: mode == "local_down" or mode == "local_stop"
-  
+  become: yes
+  tags:
+  - stop
+  - down
 
 - name: down node containers
   command:
     cmd: docker-compose -p {{ item.1.name }} down
     chdir: "{{ item.0 }}"
   loop: "{{ temp_path|zip(nodes)|list }}"
-  when: mode == "local_down" 
-  
+  become: yes
+  tags:
+  - down
+
 - name: rm temp
   file: 
     path: "{{ item }}" 
     state: absent
   with_items: "{{ temp_path }}"
-  when: mode == "clean"
+  become: yes
+  tags:
+  - clean
