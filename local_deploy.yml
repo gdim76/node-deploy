@@ -18,6 +18,8 @@
     - predeploy
     - docker
     - common
+  apply:
+    tags: initial_run
   tags:
     - initial_run
 
@@ -33,11 +35,25 @@
 
     - name: Create temp directory
       include_role:
-        name: local_temp
+        name: local_tmp
+        apply:
+            tags: initial_run
       when: not check_temp.stat.exists or mode == "local_debug" or mode == "local_debug_api"
+      tags:
+        - initial_run
+        - rebuild
+        - reload_api
     
     - name: Control dockers node
       include_role:
         name: control_docker
-
+      tags:
+        - up
+        - initial_run
+        - rebuild
+        - reload_api
+        - start
+        - stop
+        - down
+        - clean
       
