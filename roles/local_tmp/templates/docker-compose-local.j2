@@ -23,6 +23,7 @@ services:
         ipv4_address: {{ item.1.ip[0] }}
     entrypoint: ./Main.cake --fgenesis=testnet/genesis --fkeypair=testnet/{{ item.1.keypair }} --fnodesinfo=testnet/nodes --max-block-size=10 --apiin=pipes/apiin --apiout=pipes/apiout --broadcast=pipes/broadcast --init-delay=2.5 --base-exp=1.5 --logger-level=Debug --stdout-log --sync-commits-size=150 --sync-blocks-size=200
 
+
   api:
     image: nodeml/api:latest
     logging: 

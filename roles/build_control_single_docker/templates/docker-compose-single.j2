@@ -9,11 +9,14 @@ services:
         loki-max-backoff: 5s
         loki-external-labels: job=node
     volumes:
-    - '/home/{{ ansible_user_id }}/node/node-ml/apiin:/root/node/node-ml/apiin'
-    - '/home/{{ ansible_user_id }}/node/node-ml/apiout:/root/node/node-ml/apiout'
-    - '/home/{{ ansible_user_id }}/node/node-ml/broadcast:/root/node/node-ml/broadcast'
+    - '/home/{{ ansible_user_id }}/node/node-ml/Main.cake:/root/node/node-ml/Main.cake'
+    - '/home/{{ ansible_user_id }}/node/node-ml/test-node:/root/node/node-ml/test-node'
+    - '/home/{{ ansible_user_id }}/node/pipes:/root/node/node-ml/pipes'
+    - '/home/{{ ansible_user_id }}/node/node.log:/root/node/node-ml/node.log'
+    - '/home/{{ ansible_user_id }}/node/node-ml/genesis-generator/GenesisGenerator:/root/node/node-ml/innochain-cli/innochain-cli'
     tty: true
     network_mode: "host" 
+    entrypoint: ./Main.cake --fgenesis=test-node/genesis --fkeypair=test-node/keypair0 --fnodesinfo=test-node/nodes --max-block-size=10 --apiin=pipes/apiin --apiout=pipes/apiout --broadcast=pipes/broadcast --init-delay=2.5 --base-exp=1.5 --logger-level=Debug --stdout-log --sync-commits-size=150 --sync-blocks-size=200
 
   api:
     image: {{ api_image }}
@@ -25,12 +28,14 @@ services:
         loki-external-labels: job=api
     volumes:
     - '/home/{{ ansible_user_id }}/node/node-ml/apiin:/root/node/node-ml/apiin'
-    - '/home/{{ ansible_user_id }}/node/node-ml/apiout:/root/node/node-ml/apiout'
-    - '/home/{{ ansible_user_id }}/node/node-ml/broadcast:/root/node/node-ml/broadcast'
+    - '/home/{{ ansible_user_id }}/node/pipes:/root/node/pipes'
+    - '/home/{{ ansible_user_id }}/node/api-settings.py:/root/node/node-ml-api/api/settings.py'
+    - '/home/{{ ansible_user_id }}/node/node-ml-api:/root/node/node-ml-api'
+    - '/home/{{ ansible_user_id }}/node/pipe-settings.py:/root/node/node-ml-api/proxy_server/settings.py'
     tty: true
     ports:
       - "8000:8000"
-    command: python manage.py migrate
+    entrypoint: bash -c "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"
     networks:
       - node-network
 
