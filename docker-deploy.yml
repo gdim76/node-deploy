@@ -36,10 +36,6 @@
  
   roles:
      - build_managed_docker
-   
-- hosts: managed_nodes
-  roles: 
-  - ctr_docker_containers
   tags:
    - up
    - rebuild
