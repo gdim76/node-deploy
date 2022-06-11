@@ -1,10 +1,55 @@
 ---
-- name: create remote path
-  file: path=/home/{{ ansible_user_id }}/node/node-ml/ state=directory 
+- name: check that the CakeML exists
+  stat:
+    path: "{{ ansible_user_dir }}/cake-x64-64/cake"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_cake
+
+- name: download CakeML
+  ansible.builtin.unarchive:
+    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    dest: "{{ ansible_user_dir }}/"
+    creates: {{ ansible_user_dir }}/cake-x64-64
+    remote_src: yes
+    mode: ugo+rw
+  when: not check_cake.stat.exists
+
+- name: build CakeML
+  command: 
+    cmd: make
+    chdir: "{{ ansible_user_dir }}/cake-x64-64"
+  when: not check_cake.stat.exists
+
+- name: build node
+  command: 
+    cmd: make
+    chdir: "{{ ansible_user_dir }}/node/node-ml/" 
+  tags:
+  - rebuild
+
+- name: create test-node directory
+  file: path={{ ansible_user_dir }}/node/node-ml/test-node state=directory 
+
+- name: build GenesisGenerator
+  command: 
+    cmd: make
+    chdir: "{{ ansible_user_dir }}/node/node-ml/genesis-generator/"
+  tags:
+  - rebuild
+
+- name: generate test-node
+  command: 
+    cmd: "./GenesisGenerator -o={{ ansible_user_dir }}/node/node-ml/test-node -i=127.0.0.1:8080 -m"
+    chdir: "{{ ansible_user_dir }}/node/node-ml/genesis-generator/"
+
+- name: create pipes directory
+  file: path={{ ansible_user_dir }}/node/pipes/ state=directory 
 
 - name: check that the pipes exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml/{{ item }}"
+    path: "{{ ansible_user_dir }}/node/pipes/{{ item }}"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -13,24 +58,92 @@
 
 - name: create pipes
   command: 
-    cmd: mkfifo "{{ item.item }}"
-    chdir: /home/{{ ansible_user_id }}/node/node-ml/
+    cmd: mkfifo "{{ item.item }}""
+    chdir: "{{ ansible_user_dir }}/node/pipes/"
   with_items: "{{ check_pipes.results }}"
   loop_control:
     label: "{{ item.item }}"
   when: not item.stat.exists
 
+- name: apply reade and write permissions
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/node/pipes/{{ item.item }}"
+    mode: ugo+rw
+    force: yes
+  with_items: "{{ check_pipes.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+      when: not item.stat.exists
+
 - name: template docker-compose-single
   ansible.builtin.template:
-    src: "./templates/docker-compose-single.j2"
-    dest: "/home/{{ ansible_user_id }}/node/docker-compose.yml"
+    src: "docker-compose-single.j2"
+    dest: "{{ ansible_user_dir }}/node/docker-compose.yml"
 
 - name: template loki-config.j2
   ansible.builtin.template:
-    src: "./templates/loki-config.j2"
-    dest: "/home/{{ ansible_user_id }}/node/local-config.yaml"
+    src: "loki-config.j2"
+    dest: "{{ ansible_user_dir }}/node/local-config.yaml"
 
 - name: template grafana.j2
   ansible.builtin.template:
-    src: "./templates/grafana.j2"
-    dest: "/home/{{ ansible_user_id }}/node/grafana.ini"
+    src: "grafana.j2"
+    dest: "{{ ansible_user_dir }}/node/grafana.ini"
+
+- name: template api-pipe-settings
+  ansible.builtin.template:
+    src: "api-pipe-settings-docker.j2"
+    dest: "{{ ansible_user_dir }}/node/pipe-settings.py"
+
+- name: template api-settings
+  ansible.builtin.template:
+    src: "api-settings.j2"
+    dest: "{{ ansible_user_dir }}/node/api-settings.py"
+
+- name: delete old node.log files
+  file: 
+    path: "{{ ansible_user_dir }}/node/node.log" 
+    state: absent
+  ignore_errors: yes
+
+- name: create new node.log files
+  file: 
+    path: "{{ ansible_user_dir }}/node/node.log" 
+    state: touch
+    mode: ugo+rw
+
+- name: pull docker images
+  command:
+    cmd: docker-compose pull -q
+    chdir: "{{ ansible_user_dir }}/node/"
+    
+- name: up docker containers
+  command:
+    cmd: docker-compose -p node up -d
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - up
+  - initial_run
+  - rebuild
+
+- name: start node containers
+  command:
+    cmd: docker-compose -p node start
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - start
+
+- name: stop docker containers
+  command:
+    cmd: docker-compose -p node stop
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - stop
+  - down
+
+- name: down docker containers
+  command:
+    cmd: docker-compose -p node down
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - down

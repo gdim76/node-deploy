@@ -55,8 +55,8 @@
 - name: download CakeML
   ansible.builtin.unarchive:
     src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
-    dest: {{ ansible_user_dir }}/
-    creates: {{ ansible_user_dir }}/cake-x64-64
+    dest: "{{ ansible_user_dir }}"
+    creates: "{{ ansible_user_dir }}/cake-x64-64"
     remote_src: yes
     mode: ugo+rw
   when: not check_cake.stat.exists

@@ -3,7 +3,7 @@
 - name: up docker containers
   command:
     cmd: docker-compose -p node up -d
-    chdir: "/home/{{ ansible_user_id }}/node/"
+    chdir: "{{ ansible_user_dir }}/node/"
   tags:
   - up
   - rebuild
@@ -13,14 +13,14 @@
 - name: start docker containers
   command:
     cmd: docker-compose -p node start
-    chdir: "/home/{{ ansible_user_id }}/node/"
+    chdir: "{{ ansible_user_dir }}/node/"
   tags:
   - start
 
 - name: stop docker containers
   command:
     cmd: docker-compose -p node stop
-    chdir: "/home/{{ ansible_user_id }}/node/"
+    chdir: "{{ ansible_user_dir }}/node/"
   tags:
   - down
   - stop
@@ -28,6 +28,6 @@
 - name: down docker containers
   command:
     cmd: docker-compose -p node down
-    chdir: "/home/{{ ansible_user_id }}/node/"
+    chdir: "{{ ansible_user_dir }}/node/"
   tags:
   - down

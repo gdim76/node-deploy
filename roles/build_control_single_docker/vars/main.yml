@@ -1,8 +1,8 @@
 ---
-node_image: "node:latest"
-api_image: "api:latest"
+node_image: "nodeml/dev:latest"
+api_image: "nodeml/api:latest"
 mode: "up"
 pipes:
-- apiin
-- apiout
-- broadcast
+  - apiin
+  - apiout
+  - broadcast

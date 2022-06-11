@@ -1,20 +1,4 @@
 ---
-- name: check that the node-ml exists
-  stat:
-    path: "{{ ansible_user_dir }}/node/node-ml"
-    get_attributes: no
-    get_checksum: no
-    get_mime: no
-  register: check_nodeml
-
-- name: copy api
-  copy: 
-    src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml"
-    dest: "{{ ansible_user_dir }}/node/"
-    mode: preserve
-    directory_mode: ug+rw
-  when: not check_nodeml.stat.exists
-
 
 - name: transfer files
   copy:
@@ -92,7 +76,7 @@
   - rebuild
 
 - name: create dbstore
-  file: path={{ ansible_user_dir }}/node/node-ml/storage/dbstore/ state=directory 
+  file: path="{{ ansible_user_dir }}"/node/node-ml/storage/dbstore/ state=directory
 
 - name: template ml-innochain.service
   ansible.builtin.template:

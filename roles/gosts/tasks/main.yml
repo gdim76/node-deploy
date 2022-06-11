@@ -1,7 +1,7 @@
 ---
 - name: check that the build exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build"
+    path: "{{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -10,25 +10,25 @@
 - name: clone gosts 
   ansible.builtin.git:
     repo: 'https://github.com/gost-engine/engine.git'
-    dest: /home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine
+    dest: {{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine
     version: openssl_1_1_1
   when: not check_build.stat.exists
 
 - name: create build directory
-  file: path=/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build/ state=directory 
+  file: path={{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build/ state=directory 
   when: not check_build.stat.exists
       
 - name: make gosts
   command: 
-    cmd: /snap/bin/cmake -DCMAKE_BUILD_TYPE=Release /home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine
-    chdir: /home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build
+    cmd: /snap/bin/cmake -DCMAKE_BUILD_TYPE=Release {{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine
+    chdir: {{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build
 
 - name: config gosts
   command: 
     cmd: /snap/bin/cmake --build . --config Release
-    chdir: /home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build
+    chdir: {{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build
 
 - name: install gosts
   command: 
     cmd: /snap/bin/cmake --build . --target install --config Release
-    chdir: /home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build
+    chdir: {{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build
