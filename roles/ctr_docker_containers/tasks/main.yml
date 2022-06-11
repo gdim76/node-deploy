@@ -4,16 +4,30 @@
   command:
     cmd: docker-compose -p node up -d
     chdir: "/home/{{ ansible_user_id }}/node/"
-  when: mode != "down" and mode != "clean"
+  tags:
+  - up
+  - rebuild
+  - initial_run
+  - reload_api
+
+- name: start docker containers
+  command:
+    cmd: docker-compose -p node start
+    chdir: "/home/{{ ansible_user_id }}/node/"
+  tags:
+  - start
 
 - name: stop docker containers
   command:
     cmd: docker-compose -p node stop
     chdir: "/home/{{ ansible_user_id }}/node/"
-  when: mode == "down"
+  tags:
+  - down
+  - stop
 
 - name: down docker containers
   command:
     cmd: docker-compose -p node down
     chdir: "/home/{{ ansible_user_id }}/node/"
-  when: mode == "down" 
+  tags:
+  - down

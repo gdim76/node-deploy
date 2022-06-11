@@ -1,6 +1,9 @@
 ---
 - hosts: control_node
   gather_facts: no
+  - setup:
+         filter: ansible_user*
+
   roles:
     - predeploy
     - common
@@ -35,9 +38,14 @@
      - build_managed_docker
    
 - hosts: managed_nodes
-  tasks: 
-
-  - name: Control docker containers
-      include_roles: 
-        name: control_docker_containers
+  roles: 
+  - ctr_docker_containers
+  tags:
+   - up
+   - rebuild
+   - initial_run
+   - reload_api 
+   - start
+   - down
+   - stop  
       

@@ -1,23 +1,23 @@
 ---
 - name: create remote path
-  file: path=/home/{{ ansible_user_id }}/node/node-ml/test-node/ state=directory 
+  file: path="{{ ansible_user_dir }}/node/node-ml/test-node/ state=directory"
 
 - name: copy Main.cake
   copy:
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/Main.cake"
-    dest: "/home/{{ ansible_user_id }}/node/node-ml/Main.cake"
+    dest: "{{ ansible_user_dir }}/node/node-ml/Main.cake"
     mode: ug+x
 
 - name: copy GenesisGenerator
   copy:
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/genesis-generator/GenesisGenerator"
-    dest: "/home/{{ ansible_user_id }}/node/node-ml/GenesisGenerator"
+    dest: "{{ ansible_user_dir }}/node/node-ml/GenesisGenerator"
     mode: ug+x
 
 - name: copy params
   copy: 
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/test-node/{{ item }}"
-    dest: "/home/{{ ansible_user_id }}/node/node-ml/test-node/"
+    dest: "{{ ansible_user_dir }}/node/node-ml/test-node/"
   with_items:
   - genesis
   - keypair
@@ -26,11 +26,11 @@
 - name: copy node_info
   copy: 
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node_info"
-    dest: "/home/{{ ansible_user_id }}/node/"
+    dest: "{{ ansible_user_dir }}/node/"
 
 - name: check that the node-ml-api exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml-api"
+    path: "{{ ansible_user_dir }}/node/node-ml-api"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -39,45 +39,45 @@
 - name: copy api
   copy: 
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml-api"
-    dest: "/home/{{ ansible_user_id }}/node/"
+    dest: "{{ ansible_user_dir }}/node/"
     mode: preserve
     directory_mode: ug+rw
   when: not check_api.stat.exists
 
 - name: delete old node.log files
   file: 
-    path: "/home/{{ ansible_user_id }}/node/node-ml/node.log" 
+    path: "{{ ansible_user_dir }}/node/node-ml/node.log" 
     state: absent
   when: mode != "down"
 
 - name: create node.log files
   file: 
-    path: "/home/{{ ansible_user_id }}/node/node-ml/node.log" 
+    path: "{{ ansible_user_dir }}/node/node-ml/node.log" 
     state: touch
     mode: ugo+rw
   when: mode != "down"
 
 - name: template api-pipe-settings
   ansible.builtin.template:
-    src: "./templates/api-pipe-settings-docker.j2"
-    dest: "/home/{{ ansible_user_id }}/node/pipe-settings.py"
+    src: "api-pipe-settings-docker.j2"
+    dest: "{{ ansible_user_dir }}/node/pipe-settings.py"
 
 - name: template api-settings
   ansible.builtin.template:
-    src: "./templates/api-settings.j2"
-    dest: "/home/{{ ansible_user_id }}/node/api-settings.py"
+    src: "api-settings.j2"
+    dest: "{{ ansible_user_dir }}/node/api-settings.py"
 
 - name: template loki-config.j2
   ansible.builtin.template:
-    src: "./templates/loki-config.j2"
-    dest: "/home/{{ ansible_user_id }}/node/local-config.yaml"
+    src: "loki-config.j2"
+    dest: "{{ ansible_user_dir }}/node/local-config.yaml"
 
 - name: template grafana.j2
   ansible.builtin.template:
-    src: "./templates/grafana.j2"
-    dest: "/home/{{ ansible_user_id }}/node/grafana.ini"
+    src: "grafana.j2"
+    dest: "{{ ansible_user_dir }}/node/grafana.ini"
 
 - name: template docker-compose
   ansible.builtin.template:
-    src: "./templates/docker-compose.j2"
-    dest: "/home/{{ ansible_user_id }}/node/docker-compose.yml"
+    src: "docker-compose.j2"
+    dest: "{{ ansible_user_dir }}/node/docker-compose.yml"

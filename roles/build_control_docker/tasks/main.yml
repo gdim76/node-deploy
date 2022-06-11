@@ -1,9 +1,6 @@
 ---
 # Build control node for nodes with dockers containers 
 
-- setup:
-    filter: ansible_user*
-
 - name: build node
   command: 
     cmd: make

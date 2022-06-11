@@ -6,8 +6,8 @@
       - { name: "node2", ip: [ 10.1.10.22, 10.1.10.27, 10.1.10.28], port: 8001, keypair: keypair1 }
       - { name: "node3", ip: [ 10.1.10.23, 10.1.10.29, 10.1.10.30], port: 8002, keypair: keypair2 }
       - { name: "node4", ip: [ 10.1.10.24, 10.1.10.31, 10.1.10.32], port: 8003, keypair: keypair3 }
-    work_dir: "/home/{{ ansible_user_id }}/node-deploy/"
-    node_path: "/home/{{ ansible_user_id }}/node/node-ml/"
+    work_dir: "{{ ansible_user_dir }}/node-deploy/"
+    node_path: "{{ ansible_user_dir }}/node/node-ml/"
     temp_path: [ "{{ work_dir }}temp1/", "{{ work_dir }}temp2/", "{{ work_dir }}temp3/", "{{ work_dir }}temp4/" ]
     pipes: [ "apiin", "apiout", "broadcast" ]
     mode: "local"
