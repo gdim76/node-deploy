@@ -51,5 +51,5 @@
 - name: clone node-ml-api
   git:
     repo: 'https://gitlab.com/RIRussel/node-ml-api.git'
-    dest: {{ ansible_user_dir }}/node/node-ml-api
+    dest: "{{ ansible_user_dir }}/node/node-ml-api"
   when: not check_node_ml_api.stat.exists
