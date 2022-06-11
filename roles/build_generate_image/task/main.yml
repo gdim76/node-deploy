@@ -1,4 +1,27 @@
 ---
+- name: check that the CakeML exists
+  stat:
+    path: "/home/{{ ansible_user_id }}/cake-x64-64/cake"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_cake
+
+- name: download CakeML
+  ansible.builtin.unarchive:
+    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    dest: /home/{{ ansible_user_id }}/
+    creates: /home/{{ ansible_user_id }}/cake-x64-64
+    remote_src: yes
+    mode: ugo+rw
+  when: not check_cake.stat.exists
+
+- name: build CakeML
+  command: 
+    cmd: make
+    chdir: "/home/{{ ansible_user_id }}/cake-x64-64"
+  when: not check_cake.stat.exists
+
 - name: build node
   command: 
     cmd: make

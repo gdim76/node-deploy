@@ -1,8 +1,31 @@
 ---
-  - hosts: control_node
-    roles:
-      - predeploy
-      - common
-      - gosts
-      - docker
+- hosts: control_node
+  environment:
+    SSL_CERT_DIR: /etc/ssl/certs
+    
+  roles:
+    - predeploy
+    - common
+    - gosts
+    
+  tasks:
+  - name: check that the docker and docker-compose exists
+    stat:
+      path: "{{ item }}"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    with_items:
+      - /usr/bin/docker
+      - /usr/local/bin/docker-compose
+    register: check_docker
+
+- name: Install docker on hosts 
+    include_roles: 
+      name: docker
+    when: not (check_docker.results[0].stat.exists and check_docker.results[1].stat.exists)
+
+- hosts: control_node      
+  roles:
+    - build_generate_image
           
