@@ -31,7 +31,7 @@
 - name: clone node-ml
   git:
     repo: 'https://gitlab.com/InnoChain/node-ml.git'
-    dest: {{ ansible_user_dir }}/node/node-ml
+    dest: "{{ ansible_user_dir }}/node/node-ml"
   when: not check_node_ml.stat.exists
 
 - name: check that the node-ml-api exists
