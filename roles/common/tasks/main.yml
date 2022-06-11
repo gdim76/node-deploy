@@ -31,65 +31,65 @@
     state: absent
   become: yes
 
-- name: create node directory    #  она уже создана на шаге 2 клонирования repo из git
-  file: 
-    path: /home/{{ ansible_user_id }}/node/
-    state: directory 
+#- name: create node directory    #  она уже создана на шаге 2 клонирования repo из git
+#  file: 
+#    path: {{ ansible_user_dir }}/node/
+#    state: directory 
 
 - name: download openssl
   ansible.builtin.unarchive:
     src: https://www.openssl.org/source/openssl-1.1.1g.tar.gz
-    dest: /home/{{ ansible_user_id }}/node/
-    creates: /home/{{ ansible_user_id }}/node/openssl-1.1.1g
+    dest: "{{ ansible_user_dir }}/node/"
+    creates: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
     remote_src: yes
     mode: ugo+rw
 
 - name: download fix
   ansible.builtin.git:
     repo: https://github.com/openssl/openssl.git
-    dest: /home/{{ ansible_user_id }}/node/temp
+    dest: "{{ ansible_user_dir }}/node/temp"
     version: b7ce611887cfac633aacc052b2e71a7f195418b8
 
 - name: copy certs directory
   copy: 
-    src: /home/{{ ansible_user_id }}/node/temp/test/certs/
-    dest: /home/{{ ansible_user_id }}/node/openssl-1.1.1g/test/certs/
+    src: "{{ ansible_user_dir }}/node/temp/test/certs/"
+    dest: "{{ ansible_user_dir }}/node/openssl-1.1.1g/test/certs/"
 
 - name: copy ct_test.c
   copy: 
-    src: /home/{{ ansible_user_id }}/node/temp/test/ct_test.c
-    dest: /home/{{ ansible_user_id }}/node/openssl-1.1.1g/test/ct_test.c
+    src: "{{ ansible_user_dir }}/node/temp/test/ct_test.c"
+    dest: "{{ ansible_user_dir }}/node/openssl-1.1.1g/test/ct_test.c"
 
 - name: delete temp directory
   file:
     state: absent
-    path: /home/{{ ansible_user_id }}/node/temp/
+    path: "{{ ansible_user_dir }}/node/temp/"
 
 - name: config openssl
   command: 
     cmd: ./config
-    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+    chdir: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
 
 - name: build openssl
   command: 
     cmd: make
-    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+    chdir: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
 
 - name: test openssl
   command: 
     cmd: make test
-    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+    chdir: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
 
 - name: install openssl
   command: 
     cmd: make install
-    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+    chdir: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
   become: yes
 
 - name: update symlinks and rebuild the library cache
   command: 
     cmd: ldconfig
-    chdir: "/home/{{ ansible_user_id }}/node/openssl-1.1.1g"
+    chdir: "{{ ansible_user_dir }}/node/openssl-1.1.1g"
   become: yes
 
 - name: update certificates
@@ -104,7 +104,7 @@
 
 - name: check that the build exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine/build"
+    path: "{{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine/build"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -112,7 +112,7 @@
 
 - name: delete old engine
   file: 
-    path: "/home/{{ ansible_user_id }}/node/node-ml/crypto/ffi/engine" 
+    path: "{{ ansible_user_dir }}/node/node-ml/crypto/ffi/engine" 
     state: absent
   when: not check_build.stat.exists
 

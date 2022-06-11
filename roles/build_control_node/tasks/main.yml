@@ -1,7 +1,7 @@
 ---
 - name: check that the CakeML exists
   stat:
-    path: "/home/{{ ansible_user_id }}/cake-x64-64/cake"
+    path: "{{ ansible_user_dir }}/cake-x64-64/cake"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -9,9 +9,9 @@
 
 - name: download CakeML
   ansible.builtin.unarchive:
-    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz   # компилится последняя версии 1804  1370 1399 выдают ошибку на Ubuntu 20
-    dest: /home/{{ ansible_user_id }}/
-    creates: /home/{{ ansible_user_id }}/cake-x64-64
+    src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
+    dest: {{ ansible_user_dir }}/
+    creates: {{ ansible_user_dir }}/cake-x64-64
     remote_src: yes
     mode: ugo+rw
   when: not check_cake.stat.exists
@@ -19,7 +19,7 @@
 - name: build CakeML
   command: 
     cmd: make
-    chdir: "/home/{{ ansible_user_id }}/cake-x64-64"
+    chdir: "{{ ansible_user_dir }}/cake-x64-64"
   when: not check_cake.stat.exists
 
 - name: build node

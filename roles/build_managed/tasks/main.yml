@@ -1,13 +1,30 @@
 ---
+- name: check that the node-ml exists
+  stat:
+    path: "{{ ansible_user_dir }}/node/node-ml"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: check_nodeml
+
+- name: copy api
+  copy: 
+    src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml"
+    dest: "{{ ansible_user_dir }}/node/"
+    mode: preserve
+    directory_mode: ug+rw
+  when: not check_nodeml.stat.exists
+
+
 - name: transfer files
   copy:
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml/Main.cake"
-    dest: "/home/{{ ansible_user_id }}/node/node-ml/Main.cake"
+    dest: "{{ ansible_user_dir }}/node/node-ml/Main.cake"
     mode: ug+x
         
 - name: check that the pipes exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml/{{ item }}"
+    path: "{{ ansible_user_dir }}/node/node-ml/{{ item }}"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -17,7 +34,7 @@
 - name: create pipes
   command: 
     cmd: mkfifo "{{ item.item }}"
-    chdir: /home/{{ ansible_user_id }}/node/node-ml/
+    chdir: {{ ansible_user_dir }}/node/node-ml/
   with_items: "{{ check_pipes.results }}"
   loop_control:
     label: "{{ item.item }}"
@@ -25,7 +42,7 @@
 
 - name: apply reade and write permissions
   ansible.builtin.file:
-    path: "/home/{{ ansible_user_id }}/node/node-ml/{{ item }}"
+    path: "{{ ansible_user_dir }}/node/node-ml/{{ item }}"
     mode: ugo+rw
     force: yes
   with_items: "{{ pipes }}"
@@ -33,7 +50,7 @@
 
 - name: check that the node-ml-api exists
   stat:
-    path: "/home/{{ ansible_user_id }}/node/node-ml-api"
+    path: "{{ ansible_user_dir }}/node/node-ml-api"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -42,31 +59,31 @@
 - name: copy api
   copy: 
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/node-ml-api"
-    dest: "/home/{{ ansible_user_id }}/node/"
+    dest: "{{ ansible_user_dir }}/node/"
     mode: preserve
     directory_mode: ug+rw
   when: not check_api.stat.exists
 
     # - name: Initiate virtualenv
     #   pip: 
-    #     requirements: /home/{{ ansible_user_id }}/node/node-ml-api/requirements.txt
-    #     virtualenv: /home/{{ ansible_user_id }}/node/node-venv/
+    #     requirements: {{ ansible_user_dir }}/node/node-ml-api/requirements.txt
+    #     virtualenv: {{ ansible_user_dir }}/node/node-venv/
 
 - name: template api-settings
   ansible.builtin.template:
-    src: ./templates/api-pipe-settings.j2
-    dest: /home/{{ ansible_user_id }}/node/node-ml-api/proxy_server/settings.py
+    src: api-pipe-settings.j2
+    dest: {{ ansible_user_dir }}/node/node-ml-api/proxy_server/settings.py
   become: yes
 
 - name: copy testnet
   copy: 
     src: "{{ hostvars.localhost.ansible_facts.user_dir }}/node/testnet"
-    dest: "/home/{{ ansible_user_id }}/node/"
+    dest: "{{ ansible_user_dir }}/node/"
 
 - name: clean db
   file:
     state: absent
-    path: "/home/{{ ansible_user_id }}/node/node-ml/storage/dbstore/"
+    path: "{{ ansible_user_dir }}/node/node-ml/storage/dbstore/"
   ignore_errors: yes
   become: yes
   when: clean_db |bool
@@ -75,11 +92,11 @@
   - rebuild
 
 - name: create dbstore
-  file: path=/home/{{ ansible_user_id }}/node/node-ml/storage/dbstore/ state=directory 
+  file: path={{ ansible_user_dir }}/node/node-ml/storage/dbstore/ state=directory 
 
 - name: template ml-innochain.service
   ansible.builtin.template:
-    src: ./templates/ml-innochain-service.j2
+    src: ml-innochain-service.j2
     dest: /lib/systemd/system/ml-innochain.service
   become: yes
 
