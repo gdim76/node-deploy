@@ -34,7 +34,7 @@
 
 - name: copy api
   copy: 
-    src: "/home/{{ ansible_user_id }}/node/node-ml-api"
+    src: "{{ ansible_user_dir }}/node/node-ml-api"
     dest: "{{ item }}"
     mode: preserve
     directory_mode: ug+rw
@@ -46,7 +46,7 @@
 
 - name: check that the CakeML exists
   stat:
-    path: "/home/{{ ansible_user_id }}/cake-x64-64/cake"
+    path: "{{ ansible_user_dir }}/cake-x64-64/cake"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -55,8 +55,8 @@
 - name: download CakeML
   ansible.builtin.unarchive:
     src: https://github.com/CakeML/cakeml/releases/download/v1370/cake-x64-64.tar.gz
-    dest: /home/{{ ansible_user_id }}/
-    creates: /home/{{ ansible_user_id }}/cake-x64-64
+    dest: {{ ansible_user_dir }}/
+    creates: {{ ansible_user_dir }}/cake-x64-64
     remote_src: yes
     mode: ugo+rw
   when: not check_cake.stat.exists
@@ -64,7 +64,7 @@
 - name: build CakeML
   command: 
     cmd: make
-    chdir: "/home/{{ ansible_user_id }}/cake-x64-64"
+    chdir: "{{ ansible_user_dir }}/cake-x64-64"
   when: not check_cake.stat.exists
 
 - name: build node
@@ -82,7 +82,7 @@
   - rebuild
 
 - name: create testnet directory
-  file: path=/home/{{ ansible_user_id }}/node/testnet state=directory 
+  file: path={{ ansible_user_dir }}/node/testnet state=directory 
 
 - set_fact:
     node_set: "{{ node_set | default('') + item.ip[0] + ':8080,' }}"
@@ -91,12 +91,12 @@
 
 - name: generate testnet
   command: 
-    cmd: "./GenesisGenerator -o=/home/{{ ansible_user_id }}/node/testnet -i={{ node_set[:-1] }} -m"
+    cmd: "./GenesisGenerator -o={{ ansible_user_dir }}/node/testnet -i={{ node_set[:-1] }} -m"
     chdir: "{{ node_path }}genesis-generator/"
 
 - name: copy testnet
   copy: 
-    src: "/home/{{ ansible_user_id }}/node/testnet"
+    src: "{{ ansible_user_dir }}/node/testnet"
     dest: "{{ item }}"
   with_items: "{{ temp_path }}"
 
@@ -151,33 +151,33 @@
 
 - name: template api-pipe-settings
   ansible.builtin.template:
-    src: "./templates/api-pipe-settings-docker.j2"
+    src: "api-pipe-settings-docker.j2"
     dest: "{{ item }}/pipe-settings.py"
   with_items: "{{ temp_path }}"
 
 - name: template api-settings
   ansible.builtin.template:
-    src: "./templates/api-settings.j2"
+    src: "api-settings.j2"
     dest: "{{ item.0 }}/api-settings.py"
   loop: "{{ temp_path|zip(nodes)|list }}"
 
 - name: template docker-compose-local
   ansible.builtin.template:
-    src: "./templates/docker-compose-local.j2"
+    src: "docker-compose-local.j2"
     dest: "{{ item.0 }}/docker-compose.yml"
   loop: "{{ temp_path|zip(nodes)|list }}"
 
 - name: template loki-config.j2
   ansible.builtin.template:
-    src: "./templates/loki-config.j2"
+    src: "loki-config.j2"
     dest: "{{ temp_path[0] }}/local-config.yaml"
 
 - name: template docker-compose-loki.j2
   ansible.builtin.template:
-    src: "./templates/docker-compose-loki.j2"
+    src: "docker-compose-loki.j2"
     dest: "{{ temp_path[0] }}/docker-compose-loki.yml"
 
 - name: template grafana.j2
   ansible.builtin.template:
-    src: "./templates/grafana.j2"
+    src: "grafana.j2"
     dest: "{{ temp_path[0] }}/grafana.ini"
