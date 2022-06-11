@@ -81,3 +81,35 @@
   ansible.builtin.template:
     src: "docker-compose.j2"
     dest: "{{ ansible_user_dir }}/node/docker-compose.yml"
+
+- name: up docker containers
+  command:
+    cmd: docker-compose -p node up -d
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - up
+  - rebuild
+  - initial_run
+  - reload_api
+
+- name: start docker containers
+  command:
+    cmd: docker-compose -p node start
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - start
+
+- name: stop docker containers
+  command:
+    cmd: docker-compose -p node stop
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - down
+  - stop
+
+- name: down docker containers
+  command:
+    cmd: docker-compose -p node down
+    chdir: "{{ ansible_user_dir }}/node/"
+  tags:
+  - down
