@@ -1,0 +1,7 @@
+FROM nodeml/dev:latest
+
+COPY node/node-ml/Main.cake Main.cake
+COPY node/node-ml/test-node test-node
+COPY node/node-ml/genesis-generator/GenesisGenerator innochain-cli/innochain-cli
+Run mkdir pipes
+ENTRYPOINT ./Main.cake --fgenesis=test-node/genesis --fkeypair=test-node/keypair --fnodesinfo=test-node/nodes --max-block-size=10 --apiin=pipes/apiin --apiout=pipes/apiout --broadcast=pipes/broadcast --init-delay=2.5 --base-exp=1.5 --logger-level=Debug --stdout-log --sync-commits-size=150 --sync-blocks-size=200

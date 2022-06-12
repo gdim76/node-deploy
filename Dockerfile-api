@@ -1,0 +1,15 @@
+FROM rust:latest
+
+ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Moscow" DOPENSSL_ENGINES_DIR="/usr/lib/ssl"
+
+WORKDIR /root
+RUN apt-get update
+RUN apt-get install -y python3-pip \
+                    curl 
+COPY node/node-ml-api/requirements.txt node/node-ml-api/requirements.txt
+RUN pip3 install -r node/node-ml-api/requirements.txt
+WORKDIR node/node-ml-api
+RUN pip3 uninstall websocket -y
+RUN pip3 uninstall websocket-client -y
+RUN pip3 install websocket-client 
+ENTRYPOINT python3 manage.py runserver 0.0.0.0:8000
